@@ -17,7 +17,7 @@
 #  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 
-from micromon.loader import Loader
+from .loader import Loader
 
 class Monitor:
     def __init__(self, target):

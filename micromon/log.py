@@ -17,6 +17,7 @@
 #  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 
+from .config import Config
 import sys
 
 levels = ('FATAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG')
@@ -93,7 +94,8 @@ def _make_context_manager(level_name):
     return context_manager
 
 class Log:
-    loggers = [StdoutLogger('DEBUG')]
+    default_level = Config.get('general.log_level').upper()
+    loggers = [StdoutLogger(default_level)]
     last_n = 0
 
     fatal = _make_context_manager('FATAL')

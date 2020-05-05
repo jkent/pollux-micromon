@@ -22,6 +22,9 @@ import configparser
 
 class ConfigSingleton:
     options = {
+        'general.log_level':
+            {'type': str, 'default': 'info',
+             'values': ['fatal', 'error', 'warning', 'info', 'debug']},
         'target.serial_port':
             {'type': str},
         'target.data_timeout':

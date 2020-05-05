@@ -18,8 +18,8 @@
 #
 
 import micromon
-from micromon.config import Config
-from micromon.log import Log
+from .config import Config
+from .log import Log
 import sys
 import os
 from binascii import crc32
@@ -185,10 +185,11 @@ class Loader:
         block = 0
 
         log_entry = Log.info('Sending block %(block)d of %(blocks)d block(s)',
-                             block=block, blocks=blocks)
+                             block=block + 1, blocks=blocks)
         with log_entry:
             while block < blocks:
-                log_entry.update(block=block+1)
+                if block+1 < blocks:
+                    log_entry.update(block=block+1)
                 if not self._target.get_power_state():
                     with Log.warning('Power lost'):
                         return False

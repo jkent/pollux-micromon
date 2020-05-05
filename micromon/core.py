@@ -18,8 +18,8 @@
 #
 
 from binascii import crc32
-from micromon.loader import Loader
-from micromon.log import Log
+from .loader import Loader
+from .log import Log
 
 CORE_MODULE_ID = 0
 

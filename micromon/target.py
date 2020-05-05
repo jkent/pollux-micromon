@@ -17,8 +17,8 @@
 #  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 
-from micromon.config import Config
-from micromon.log import Log
+from .config import Config
+from .log import Log
 from serial import Serial
 from time import sleep
 from struct import Struct
