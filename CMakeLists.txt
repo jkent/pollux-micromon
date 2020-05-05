@@ -24,7 +24,7 @@ add_definitions(
     -DCONFIG_RAM_18MB
 )
 
-add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/core/core.lds
+add_custom_command(OUTPUT core/core.lds
     MAIN_DEPENDENCY ${CMAKE_CURRENT_SOURCE_DIR}/core/core.lds.S
     COMMAND ${CMAKE_C_COMPILER} -I ${CMAKE_CURRENT_SOURCE_DIR}/core/include -E ${CMAKE_CURRENT_SOURCE_DIR}/core/core.lds.S -P -o core/core.lds VERBATIM
 )
