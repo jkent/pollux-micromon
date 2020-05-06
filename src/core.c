@@ -18,11 +18,11 @@
  */
 
 #include <asm/types.h>
+#include <driver/lowlevel_uart.h>
 #include "startup.h"
 #include "core.h"
 #include "crc32.h"
 #include "loader.h"
-#include "lowlevel_uart.h"
 
 static void core_loop(void);
 static void core_mem_write(void);

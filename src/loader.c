@@ -18,12 +18,12 @@
  */
 
 #include <asm/io.h>
+#include <driver/lowlevel_uart.h>
 #include <mach/alive.h>
 #include <stddef.h>
 #include "common.h"
 #include "core.h"
 #include "loader.h"
-#include "lowlevel_uart.h"
 #include "startup.h"
 
 #define LOADER_SIGNATURE 0x6E6F4DE6
