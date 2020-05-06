@@ -10,20 +10,17 @@ Getting started
 
 ```sh
 sudo apt-get install gcc-arm-none-eabi
-mkdir build
-cd build
-cmake -DCMAKE_TOOLCHAIN_FILE=toolchain.cmake ..
-make
-cd ..
+git clone --recursive https://github.com/jkent/pollux-baremetal
+source pollux-baremetal/export.sh
 ```
 
-Configure your target in `micromon.cfg`.
+Configure your target in `pollux-baremetal/tools/micromon/micromon.cfg`.
 
 
 Now, with your target turned on and setup for UART boot mode: 
 
 ```sh
-./shell.py
+micromon.py
 ```
 
 You may have to hold the power switch in the ON position until micromon takes control of the target.
@@ -33,6 +30,6 @@ To turn off your device,
 power off
 ```
 
-The bootstrap.py and boot_kernel.py scripts let you load and execute other binaries from micromon.
+The bootstrap.py and boot_kernel.py scripts let you load and execute binaries using micromon.
 
 Have fun!
