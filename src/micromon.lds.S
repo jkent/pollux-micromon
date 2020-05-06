@@ -35,7 +35,7 @@ SECTIONS
 	{
 		/* these two objects must fit in the first 512 bytes */
 		*/src/loader.*(.text .rodata .data)
-		*/src/uart.*(.text .rodata .data)
+		*/baremetal/lowlevel_uart.*(.text .rodata .data)
 
 		*(.text)
 	}

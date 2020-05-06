@@ -1,1 +1,5 @@
 source "$(BAREMETAL_PATH)/Kconfig"
+
+config STANDALONE
+    bool
+    default y

@@ -19,10 +19,10 @@
 
 #include <asm/types.h>
 #include "startup.h"
-#include "uart.h"
+#include "core.h"
 #include "crc32.h"
 #include "loader.h"
-#include "core.h"
+#include "lowlevel_uart.h"
 
 static void core_loop(void);
 static void core_mem_write(void);
@@ -61,7 +61,7 @@ void main(void)
 		crc = crc32(crc, *p);
 	}
 
-	put_u32(crc);
+	lowlevel_uart_put_u32(crc);
 
 	core_loop();
 }
@@ -71,15 +71,15 @@ static void core_loop(void)
 	u8 module, command;
 
 	while (1) {
-		module = getc();
+		module = lowlevel_uart_getc();
 		if (module == 0) {
-			command = getc();
+			command = lowlevel_uart_getc();
 			switch (command) {
 			case core_cmd_nop:
 				break;
 
 			case core_cmd_set_baudrate:
-				loader_set_baudrate(get_u32());
+				loader_set_baudrate(lowlevel_uart_get_u32());
 				break;
 
 			case core_cmd_write_u8:
@@ -115,11 +115,11 @@ static void core_loop(void)
 				break;
 
 			case core_cmd_run:
-				core_run(get_u32());
+				core_run(lowlevel_uart_get_u32());
 				break;
 
 			case core_cmd_run_kernel:
-				core_run_kernel(get_u32(), get_u32());
+				core_run_kernel(lowlevel_uart_get_u32(), lowlevel_uart_get_u32());
 				break;
 			}
 		}
@@ -128,38 +128,38 @@ static void core_loop(void)
 
 static void core_read_u8(void)
 {
-	u8 *addr = (u8 *)get_u32();
-	putc(*addr);
+	u8 *addr = (u8 *)lowlevel_uart_get_u32();
+	lowlevel_uart_putc(*addr);
 }
 
 static void core_read_u16(void)
 {
-	u16 *addr = (u16 *)get_u32();
-	put_u16(*addr);
+	u16 *addr = (u16 *)lowlevel_uart_get_u32();
+	lowlevel_uart_put_u16(*addr);
 }
 
 static void core_read_u32(void)
 {
-	u32 *addr = (u32 *)get_u32();
-	put_u32(*addr);
+	u32 *addr = (u32 *)lowlevel_uart_get_u32();
+	lowlevel_uart_put_u32(*addr);
 }
 
 static void core_write_u8(void)
 {
-	u8 *addr = (u8 *)get_u32();
-	*addr = getc();
+	u8 *addr = (u8 *)lowlevel_uart_get_u32();
+	*addr = lowlevel_uart_getc();
 }
 
 static void core_write_u16(void)
 {
-	u16 *addr = (u16 *)get_u32();
-	*addr = get_u16();
+	u16 *addr = (u16 *)lowlevel_uart_get_u32();
+	*addr = lowlevel_uart_get_u16();
 }
 
 static void core_write_u32(void)
 {
-	u32 *addr = (u32 *)get_u32();
-	*addr = get_u32();
+	u32 *addr = (u32 *)lowlevel_uart_get_u32();
+	*addr = lowlevel_uart_get_u32();
 }
 
 static void core_mem_write(void)
@@ -168,16 +168,16 @@ static void core_mem_write(void)
 	u32 size;
 	u32 crc = 0;
 
-	addr = (u8 *)get_u32();
-	size = get_u32();
+	addr = (u8 *)lowlevel_uart_get_u32();
+	size = lowlevel_uart_get_u32();
 
 	p = addr;
 	while ((u32)addr + size > (u32)p) {
-		*p = getc();
+		*p = lowlevel_uart_getc();
 		crc = crc32(crc, *p);
 		p++;
 	}
-	put_u32(crc);
+	lowlevel_uart_put_u32(crc);
 }
 
 static void core_mem_read(void)
@@ -186,16 +186,16 @@ static void core_mem_read(void)
 	u32 size;
 	u32 crc = 0;
 
-	addr = (u8 *)get_u32();
-	size = get_u32();
+	addr = (u8 *)lowlevel_uart_get_u32();
+	size = lowlevel_uart_get_u32();
 
 	p = addr;
 	while ((u32)addr + size > (u32)p) {
-		putc(*p);
+		lowlevel_uart_putc(*p);
 		crc = crc32(crc, *p);
 		p++;
 	}
-	put_u32(crc);
+	lowlevel_uart_put_u32(crc);
 }
 
 void core_run(u32 exec_at)

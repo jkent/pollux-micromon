@@ -21,10 +21,10 @@
 #include <mach/alive.h>
 #include <stddef.h>
 #include "common.h"
-#include "startup.h"
-#include "uart.h"
-#include "loader.h"
 #include "core.h"
+#include "loader.h"
+#include "lowlevel_uart.h"
+#include "startup.h"
 
 #define LOADER_SIGNATURE 0x6E6F4DE6
 
@@ -41,9 +41,9 @@ enum loader_commands {
 
 void loader(void)
 {
-	init_uart(NULL);
+	lowlevel_uart_init(NULL);
 	loader_latch_power();
-	put_u32(LOADER_SIGNATURE);
+	lowlevel_uart_put_u32(LOADER_SIGNATURE);
 	loader_loop();
 	main();
 
@@ -66,7 +66,7 @@ static void loader_loop(void)
 	u32 baudrate;
 
 	while (1) {
-		command = getc();
+		command = lowlevel_uart_getc();
 		switch (command) {
 		case loader_cmd_nop:
 			break;
@@ -75,7 +75,7 @@ static void loader_loop(void)
 			return;
 
 		case loader_cmd_set_baudrate:
-			baudrate = get_u32();
+			baudrate = lowlevel_uart_get_u32();
 			loader_set_baudrate(baudrate);
 			break;
 
@@ -88,21 +88,21 @@ static void loader_loop(void)
 
 void loader_set_baudrate(u32 baudrate)
 {
-	baudinfo_t *baudinfo = find_baudinfo(baudrate);
+	lowlevel_uart_baudinfo_t *baudinfo = lowlevel_uart_find_baudinfo(baudrate);
 	if (baudinfo == NULL) {
-		putc(REPLY_FAIL);
+		lowlevel_uart_putc(REPLY_FAIL);
 		return;
 	}
 
-	putc(REPLY_OK);
-	init_uart(baudinfo);
+	lowlevel_uart_putc(REPLY_OK);
+	lowlevel_uart_init(baudinfo);
 	while (1) {
-		if (getc() != '\x55')
+		if (lowlevel_uart_getc() != '\x55')
 			continue;
-		if (getc() == '\xAA')
+		if (lowlevel_uart_getc() == '\xAA')
 			break;
 	}
-	putc(REPLY_OK);
+	lowlevel_uart_putc(REPLY_OK);
 }
 
 static void loader_load_rest(void)
@@ -110,7 +110,7 @@ static void loader_load_rest(void)
 	u32 *p;
 
 	for (p = (u32 *)(MICROMON_START + 512); (u32)p < CORE_END; p++) {
-		*p = get_u32();
+		*p = lowlevel_uart_get_u32();
 	}
-	putc(REPLY_OK);
+	lowlevel_uart_putc(REPLY_OK);
 }
