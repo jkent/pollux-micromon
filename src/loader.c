@@ -17,8 +17,9 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <asm/arch/common.h>
-#include <asm/arch/gpio_hal.h>
+#include <asm/io.h>
+#include <mach/alive.h>
+#include <stddef.h>
 #include "common.h"
 #include "startup.h"
 #include "uart.h"
@@ -40,7 +41,7 @@ enum loader_commands {
 
 void loader(void)
 {
-	init_uart(19200);
+	init_uart(NULL);
 	loader_latch_power();
 	put_u32(LOADER_SIGNATURE);
 	loader_loop();
@@ -52,11 +53,11 @@ void loader(void)
 
 static void loader_latch_power(void)
 {
-	REG32(LF1000_ALIVE_BASE+ALIVEPWRGATEREG) = 1;
-	REG32(LF1000_ALIVE_BASE+ALIVEGPIORSTREG) = 0x00;
-	REG32(LF1000_ALIVE_BASE+ALIVEGPIOSETREG) = 0x80;
-	REG32(LF1000_ALIVE_BASE+ALIVEGPIOSETREG) = 0x00;
-	REG32(LF1000_ALIVE_BASE+ALIVEPWRGATEREG) = 0;
+	writel(ALIVE_PWRGATEREG_NPOWERGATING, ALIVE_BASE + ALIVE_PWRGATEREG);
+	writel(0, ALIVE_BASE + ALIVE_GPIORSTREG);
+	writel(ALIVE_GPIO_VDDPWRONRST, ALIVE_BASE + ALIVE_GPIOSETREG);
+	writel(0, ALIVE_BASE + ALIVE_GPIOSETREG);
+	writel(0, ALIVE_BASE + ALIVE_PWRGATEREG);
 }
 
 static void loader_loop(void)
@@ -87,13 +88,14 @@ static void loader_loop(void)
 
 void loader_set_baudrate(u32 baudrate)
 {
-	if (!find_baudinfo(baudrate)) {
+	baudinfo_t *baudinfo = find_baudinfo(baudrate);
+	if (baudinfo == NULL) {
 		putc(REPLY_FAIL);
 		return;
 	}
 
 	putc(REPLY_OK);
-	init_uart(baudrate);
+	init_uart(baudinfo);
 	while (1) {
 		if (getc() != '\x55')
 			continue;

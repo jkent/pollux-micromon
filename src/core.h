@@ -20,7 +20,7 @@
 #ifndef __CORE_H__
 #define __CORE_H__
 
-#include <asm/arch/common.h>
+#include <asm/types.h>
 
 void main(void);
 void core_run(u32 exec_at);

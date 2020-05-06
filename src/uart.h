@@ -20,22 +20,11 @@
 #ifndef __UART_H__
 #define __UART_H__
 
-#include <asm/arch/common.h>
-#include <asm/arch/uart.h>
+#include <asm/types.h>
 
-typedef struct {
-	u32 baudrate;
-	u16 clkgen;
-	u16 brd;
-} baudinfo_t;
+typedef struct baudinfo_t baudinfo_t;
 
-#define DEFAULT_BAUD 19200
-
-#define BAUDINFO(baud, clksrc, div, brd) \
-	{baud, (div << UARTCLKDIV) | (clksrc << UARTCLKSRCSEL), brd}
-#define END_BAUDINFO {0, 0, 0}
-
-void init_uart(u32 baudrate);
+void init_uart(baudinfo_t *baudinfo);
 baudinfo_t *find_baudinfo(u32 baudrate);
 u8 getc(void);
 void putc(u8 c);

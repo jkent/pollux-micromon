@@ -17,8 +17,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <asm/arch/platform.h>
-#include <asm/arch/common.h>
+#include <asm/types.h>
 #include "startup.h"
 #include "uart.h"
 #include "crc32.h"

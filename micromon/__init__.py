@@ -3,7 +3,7 @@ import sys
 
 MICROMON_ROOT = path.normpath(path.join(path.dirname(path.abspath(__file__)), '..'))
 CONFIG_PATH = path.normpath(path.join(MICROMON_ROOT, 'micromon.cfg'))
-CORE_BIN = path.normpath(path.join(MICROMON_ROOT, 'core.bin'))
+CORE_BIN = path.normpath(path.join(MICROMON_ROOT, 'build', 'micromon.bin'))
 CORE_SIZE = (1 << 14) # 16k
 
 # need to iterate over path and see if we're in there currently

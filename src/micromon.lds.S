@@ -27,15 +27,15 @@ SECTIONS
 {
 	. = 0x0;
 	. = ALIGN(4);
-	.startup : { */core/startup.*(.text .rodata .data) }
+	.startup : { */src/startup.*(.text .rodata .data) }
 
 	. += MICROMON_START;
 	. = ALIGN(4);
 	.text : AT(ADDR(.startup) + SIZEOF(.startup))
 	{
 		/* these two objects must fit in the first 512 bytes */
-		*/core/loader.*(.text .rodata .data)
-		*/core/uart.*(.text .rodata .data)
+		*/src/loader.*(.text .rodata .data)
+		*/src/uart.*(.text .rodata .data)
 
 		*(.text)
 	}

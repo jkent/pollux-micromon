@@ -1,9 +1,5 @@
 __pycache__/
-CMakeFiles/
-CMakeCache.txt
-cmake_install.cmake
+build/
 core.bin
 core.dis
 core.elf
-core/core.lds
-Makefile

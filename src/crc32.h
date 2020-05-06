@@ -19,7 +19,7 @@
 #ifndef __CRC32_H__
 #define __CRC32_H__
 
-#include <asm/arch/common.h>
+#include <asm/types.h>
 
 #define CRC32_POLYNOMIAL 0x04C11DB7
 

@@ -20,7 +20,7 @@
 #ifndef __LOADER_H__
 #define __LOADER_H__
 
-#include <asm/arch/common.h>
+#include <asm/types.h>
 
 void loader(void);
 void loader_set_baudrate(u32 baudate);

@@ -17,13 +17,24 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <asm/arch/gpio.h>
-#include <asm/arch/gpio_hal.h>
-#include <asm/arch/uart.h>
+#include <asm/io.h>
+#include <mach/gpio.h>
+#include <mach/uart.h>
+#include <stddef.h>
 #include "uart.h"
 #include "common.h"
 
-baudinfo_t baudinfo[] = {
+#define BAUDINFO(baud, clksrc, div, brd) \
+	{baud, UART_CLKGEN_CLKDIV(div) | UART_CLKGEN_CLKSRCSEL(clksrc), brd}
+#define END_BAUDINFO {0, 0, 0}
+
+struct baudinfo_t {
+	u32 baudrate;
+	u16 clkgen;
+	u16 brd;
+};
+
+static struct baudinfo_t baudinfo_table[] = {
 	BAUDINFO(  19200, 1, 39, 11),
 	BAUDINFO(  38400, 1, 39,  5),
 	BAUDINFO(  57600, 1, 39,  3),
@@ -41,30 +52,29 @@ baudinfo_t baudinfo[] = {
  * default 147.461538 MHz and most of the UART registers are sane.  Tested
  * on the POLLUX VR3520F.
  */
-void init_uart(u32 baudrate)
+void init_uart(baudinfo_t *baudinfo)
 {
-	baudinfo_t *p = find_baudinfo(baudrate);
-	if (!p) {
-		return;
+	if (baudinfo == NULL) {
+		baudinfo = &baudinfo_table[0];
 	}
 
-	/* Wait until the transmitter is empty */
-	while (IS_CLR(REG16(LF1000_SYS_UART_BASE+TRSTATUS),
-	              TRANSMITTER_EMPTY));
+	/* Wait until the transmitter is done */
+	while (!(readw(UART0_BASE + UART_TRSTATUS) & UART_TRSTATUS_TXDONE))
+		;
 
 	/* Configure clock */
-	REG16(LF1000_SYS_UART_BASE+UARTCLKGEN) = p->clkgen;
+	writew(baudinfo->clkgen, UART0_BASE + UART_CLKGEN);
 	/* Set baudrate divisor */
-	REG16(LF1000_SYS_UART_BASE+BRD) = p->brd;
+	writew(baudinfo->brd, UART0_BASE + UART_BRD);
 	/* Set GPIO as TX */
-	REG32(LF1000_GPIO_BASE+GPIOAALTFN0) = GPIO_ALT1 << (GPIO_PIN8*2);
+	writel(GPIO_ALTFN_ALTFN1 << (8 * 2), GPIOA_BASE + GPIO_ALTFNL);
 	/* Enable TX and RX */
-	REG16(LF1000_SYS_UART_BASE+UCON) = (1<<TRANS_MODE)|(1<<RECEIVE_MODE);
+	writel(UART_UCON_TRANSMODE_INTPOLL | UART_UCON_RECVMODE_INTPOLL, UART0_BASE + UART_UCON);
 }
 
 baudinfo_t *find_baudinfo(u32 baudrate)
 {
-	baudinfo_t *p = &baudinfo[0];
+	baudinfo_t *p = &baudinfo_table[0];
 
 	while (p->baudrate) {
 		if (p->baudrate == baudrate) {
@@ -77,16 +87,16 @@ baudinfo_t *find_baudinfo(u32 baudrate)
 
 u8 getc(void)
 {
-	while (IS_CLR(REG16(LF1000_SYS_UART_BASE+TRSTATUS),
-	              RECEIVE_BUFFER_DATA_READY));
-	return REG8(LF1000_SYS_UART_BASE+RHB);
+	while (!(readw(UART0_BASE + UART_TRSTATUS) & UART_TRSTATUS_RXREADY))
+		;
+	return readb(UART0_BASE + UART_RHB);
 }
 
 void putc(u8 c)
 {
-	while (IS_CLR(REG16(LF1000_SYS_UART_BASE+TRSTATUS),
-	              TRANSMIT_BUFFER_EMPTY));
-	REG8(LF1000_SYS_UART_BASE+THB) = c;
+	while (!(readw(UART0_BASE + UART_TRSTATUS) & UART_TRSTATUS_TXEMPTY))
+		;
+	writeb(c, UART0_BASE + UART_THB);
 }
 
 u16 get_u16(void)
@@ -116,4 +126,3 @@ void put_u32(u32 n)
 	put_u16(n);
 	put_u16(n >> 16);
 }
-
