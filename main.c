@@ -48,7 +48,7 @@ enum cmd_commands {
 	END_OF_COMMANDS
 };
 
-void main(void)
+int main(void)
 {
 	u8 module, command;
 
@@ -107,6 +107,8 @@ void main(void)
 			}
 		}
 	}
+
+	return 0;
 }
 
 static void read_u8(void)
