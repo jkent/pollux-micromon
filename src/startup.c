@@ -17,41 +17,33 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include <asm/attributes.h>
 #include <asm/io.h>
 #include <driver/lowlevel_uart.h>
 #include <mach/alive.h>
 #include <stddef.h>
-#include "common.h"
-#include "core.h"
-#include "loader.h"
-#include "startup.h"
 
-#define LOADER_SIGNATURE 0x6E6F4DE6
+#define STARTUP_SIGNATURE 0x6E6F4DE6
 
-static void loader_latch_power(void);
-static void loader_loop(void);
-static void loader_load_rest(void);
+static void startup_latch_power(void);
+static void startup_set_baudrate(void);
+static void startup_load_rest(void);
+void main(void);
 
-enum loader_commands {
-	loader_cmd_nop = 0,
-	loader_cmd_go_main,
-	loader_cmd_set_baudrate,
-	loader_cmd_load_rest,
-};
-
-void loader(void)
+EARLY_CODE NAKED void startup(void)
 {
 	lowlevel_uart_init(NULL);
-	loader_latch_power();
-	lowlevel_uart_put_u32(LOADER_SIGNATURE);
-	loader_loop();
+	startup_latch_power();
+	lowlevel_uart_put_u32(STARTUP_SIGNATURE);
+	startup_set_baudrate();
+	startup_load_rest();
 	main();
 
 	/* Never return */
 	while(1);	
 }
 
-static void loader_latch_power(void)
+EARLY_CODE static void startup_latch_power(void)
 {
 	writel(ALIVE_PWRGATEREG_NPOWERGATING, ALIVE_BASE + ALIVE_PWRGATEREG);
 	writel(0, ALIVE_BASE + ALIVE_GPIORSTREG);
@@ -60,57 +52,39 @@ static void loader_latch_power(void)
 	writel(0, ALIVE_BASE + ALIVE_PWRGATEREG);
 }
 
-static void loader_loop(void)
+EARLY_CODE static void startup_set_baudrate(void)
 {
-	u8 command;
-	u32 baudrate;
+	u32 baudrate = lowlevel_uart_get_u32();
+	const lowlevel_uart_baudinfo_t *baudinfo = lowlevel_uart_find_baudinfo(baudrate);
 
+	/* we need a little delay, so return a status byte */
+	if (baudinfo == NULL) {
+		lowlevel_uart_putc(0);
+		return;
+	}
+
+	lowlevel_uart_putc(1); 
+	lowlevel_uart_init(baudinfo);
 	while (1) {
-		command = lowlevel_uart_getc();
-		switch (command) {
-		case loader_cmd_nop:
-			break;
-
-		case loader_cmd_go_main:
-			return;
-
-		case loader_cmd_set_baudrate:
-			baudrate = lowlevel_uart_get_u32();
-			loader_set_baudrate(baudrate);
-			break;
-
-		case loader_cmd_load_rest:
-			loader_load_rest();
+		if (lowlevel_uart_getc() != '\x55') {
+			continue;
+		}
+		if (lowlevel_uart_getc() == '\xAA') {
 			break;
 		}
 	}
 }
 
-void loader_set_baudrate(u32 baudrate)
+EARLY_CODE static void startup_load_rest(void)
 {
-	lowlevel_uart_baudinfo_t *baudinfo = lowlevel_uart_find_baudinfo(baudrate);
-	if (baudinfo == NULL) {
-		lowlevel_uart_putc(REPLY_FAIL);
-		return;
-	}
+	void *start = (void *)512;//(readw(0xA4000000) & 0x400 ? 16384 : 512);
+	u32 size = lowlevel_uart_get_u32();
 
-	lowlevel_uart_putc(REPLY_OK);
-	lowlevel_uart_init(baudinfo);
-	while (1) {
-		if (lowlevel_uart_getc() != '\x55')
-			continue;
-		if (lowlevel_uart_getc() == '\xAA')
-			break;
-	}
-	lowlevel_uart_putc(REPLY_OK);
-}
+#if CONFIG_BAREMETAL_RELOCATE
+	start += CONFIG_BAREMETAL_RELOCATE_ADDRESS;
+#endif
 
-static void loader_load_rest(void)
-{
-	u32 *p;
-
-	for (p = (u32 *)(MICROMON_START + 512); (u32)p < CORE_END; p++) {
-		*p = lowlevel_uart_get_u32();
+	for (void *p = start; p < start + size; p += 4) {
+		*(u32 *)p = lowlevel_uart_get_u32();
 	}
-	lowlevel_uart_putc(REPLY_OK);
 }

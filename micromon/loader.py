@@ -27,11 +27,6 @@ from time import sleep
 
 _loader_signature    = b'\xE6Mon'
 
-LOADER_NOP          = 0
-LOADER_GO_MAIN      = 1
-LOADER_SET_BAUDRATE = 2
-LOADER_LOAD_REST    = 3
-
 class Loader:
     def __init__(self, target):
         self._target = target
@@ -56,7 +51,6 @@ class Loader:
 
                 if self._init_core(core):
                     break
-            self._check_crc(core)
         except Exception as inst:
             Log.fatal(str(inst)).single()
             sys.exit(1)
@@ -65,12 +59,9 @@ class Loader:
         fp = open(micromon.CORE_BIN, 'rb')
         fp.seek(0, os.SEEK_END)
         size = fp.tell()
-        if size > micromon.CORE_SIZE:
-            raise Exception('Core binary is too big')
         fp.seek(0, os.SEEK_SET)
 
         core = fp.read(size)
-        core += b'\x00' * (micromon.CORE_SIZE - size)
         return core
 
     def _init_core(self, core):
@@ -83,7 +74,7 @@ class Loader:
                 if not self._loader_512(core):
                     return False
             elif uart_boot_size == 'detect':
-                if not self._write(core[512:]):
+                if not self._write(core[512:16384]):
                     return False
                 if self._loader_signature():
                     self._loader_16k()
@@ -93,12 +84,16 @@ class Loader:
                 raise Exception('512 boot failed')
 
         elif uart_boot_size == '16k':
-            if not self._write(core):
+            if not self._write(core[:16384]):
                 return False
             if self._loader_signature():
                 self._loader_16k()
             else:
                 raise Exception('16k boot failed')
+
+        response = self._target.read_u8()
+        if not response:
+            raise Exception('Loading code failed')
 
         return True
 
@@ -106,7 +101,7 @@ class Loader:
         response = self._target.read(4)
         if not response:
             return False
-        
+
         if response == _loader_signature:
             return True
         else:
@@ -116,67 +111,31 @@ class Loader:
         self._set_baudrate()
         if not self._load_rest(core[512:]):
             return False
-        self._go_main()
         return True
 
     def _loader_16k(self):
         self._set_baudrate()
-        self._go_main()
+        if not self._load_rest(16384, core[16384:]):
+            return False
         return True
 
     def _set_baudrate(self):
         baudrate = Config.get('monitor.baudrate')
-
+        
         with Log.debug('Setting target baudrate to %(baudrate)d',
                        baudrate=baudrate):
-            self._target.write_u8(LOADER_SET_BAUDRATE)
             self._target.write_u32(baudrate)
             response = self._target.read_u8()
-            if response == None:
-                raise Exception('Target did not respond')
-            elif response:
-                raise Exception('Target error')
-
-            self._target.set_baudrate(baudrate)
+            if response:
+                self._target.set_baudrate(baudrate)
             self._target.write_u16(0xAA55)
 
-            response = self._target.read_u8()
-            if response == None:
-                raise Exception('Target did not respond')
-            elif response:
-                raise Exception('Target error')
-
-    def _load_rest(self, rest):
-        if len(rest) != micromon.CORE_SIZE - 512:
-            raise Exception('Incorrect data length')
-
-        self._target.write_u8(LOADER_LOAD_REST)
-
-        if not self._write(rest):
+    def _load_rest(self, data):
+        self._target.write_u32(len(data))
+        if not self._write(data):
             return False
 
-        response = self._target.read_u8()
-        if response == None:
-            raise Exception('Target did not respond')
-        elif response:
-            raise Exception('Target error')
-
         return True
-
-    def _go_main(self):
-        self._target.write_u8(LOADER_GO_MAIN)
-
-    def _check_crc(self, core):
-        remote_crc = self._target.read_u32()
-        if remote_crc == None:
-            raise Exception('Target did not respond')
-        Log.debug('Remote CRC32: 0x%(remote_crc)08X',
-                  remote_crc=remote_crc).single()
-        local_crc = crc32(core) & 0xFFFFFFFF
-        Log.debug('Local CRC32: 0x%(local_crc)08X',
-                  local_crc=local_crc).single()
-        if remote_crc != local_crc:
-            raise Exception('CRC32 check failed')
 
     def _write(self, data):
         size = len(data)
@@ -187,9 +146,8 @@ class Loader:
         log_entry = Log.info('Sending block %(block)d of %(blocks)d block(s)',
                              block=block + 1, blocks=blocks)
         with log_entry:
-            while block < blocks:
-                if block+1 < blocks:
-                    log_entry.update(block=block+1)
+            while block + 1 < blocks:
+                log_entry.update(block=block + 1)
                 if not self._target.get_power_state():
                     with Log.warning('Power lost'):
                         return False

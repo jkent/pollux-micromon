@@ -25,7 +25,6 @@ CORE_MODULE_ID = 0
 
 COMMANDS = (
   'nop',
-  'set_baudrate',
   'write_u8',
   'write_u16',
   'write_u32',

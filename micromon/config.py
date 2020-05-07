@@ -48,8 +48,7 @@ class ConfigSingleton:
              'values': ['detect', '512', '16k']},
         'monitor.baudrate':
             {'type': int, 'default': 115200, 
-             'values': [19200, 38400, 57600, 115200, 230400, 460800, 614400, 
-                        921600, 1500000]},
+             'values': [19200, 115200, 230400, 460800, 921600, 1500000]},
     }
 
     def __init__(self):

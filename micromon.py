@@ -318,6 +318,15 @@ class CommandParser(Cmd):
         else:
             print((self.do_power.__doc__))
 
+    def do_EOF(self, s):
+        """EOF
+
+        Powers off target and exits.
+        """
+        self.do_power('off')
+        print()
+        return True
+
     def do_quit(self, s):
         """quit
 
@@ -327,8 +336,7 @@ class CommandParser(Cmd):
     do_q = do_quit
     
 if __name__ == '__main__':
-    print('\nMicromon Shell 0.1\n')
+    print('\nMicromon Shell 1.0\n')
 
     cp = CommandParser()
     cp.cmdloop('Type \'help\' for assistance.')
-

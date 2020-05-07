@@ -1,3 +1,2 @@
-obj-y += core.o
-obj-y += loader.o
+obj-y += main.o
 obj-y += startup.o

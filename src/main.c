@@ -19,150 +19,133 @@
 
 #include <asm/types.h>
 #include <baremetal/crc32.h>
+#include <baremetal/linker.h>
 #include <driver/lowlevel_uart.h>
-#include "startup.h"
-#include "core.h"
-#include "loader.h"
 
-static void core_loop(void);
-static void core_mem_write(void);
-static void core_mem_read(void);
-static void core_write_u8();
-static void core_write_u16();
-static void core_write_u32();
-static void core_read_u8();
-static void core_read_u16();
-static void core_read_u32();
+static void mem_write(void);
+static void mem_read(void);
+static void write_u8();
+static void write_u16();
+static void write_u32();
+static void read_u8();
+static void read_u16();
+static void read_u32();
+static void run(u32 exec_at);
+static void run_kernel(u32 exec_at, u32 machine_type);
 
-enum core_cmd_commands {
-	core_cmd_nop = 0,
-	core_cmd_set_baudrate,
-	core_cmd_write_u8,
-	core_cmd_write_u16,
-	core_cmd_write_u32,
-	core_cmd_read_u8,
-	core_cmd_read_u16,
-	core_cmd_read_u32,
-	core_cmd_mem_write,
-	core_cmd_mem_read,
-	core_cmd_run,
-	core_cmd_run_kernel,
+enum cmd_commands {
+	cmd_nop = 0,
+	cmd_write_u8,
+	cmd_write_u16,
+	cmd_write_u32,
+	cmd_read_u8,
+	cmd_read_u16,
+	cmd_read_u32,
+	cmd_mem_write,
+	cmd_mem_read,
+	cmd_run,
+	cmd_run_kernel,
 	END_OF_COMMANDS
 };
 
 void main(void)
 {
-	u32 crc = 0;
+	u8 module, command;
+
+	/* signal we are here */
+	lowlevel_uart_putc(1);
 
 	init_crc32_table();
-
-	for (u32 addr = CORE_START; addr < (CORE_START+CORE_SIZE); addr++) {
-		u8 *p = (u8 *)addr;
-		crc = crc32(crc, *p);
-	}
-
-	lowlevel_uart_put_u32(crc);
-
-	core_loop();
-}
-
-static void core_loop(void)
-{
-	u8 module, command;
 
 	while (1) {
 		module = lowlevel_uart_getc();
 		if (module == 0) {
 			command = lowlevel_uart_getc();
 			switch (command) {
-			case core_cmd_nop:
+			case cmd_nop:
 				break;
 
-			case core_cmd_set_baudrate:
-				loader_set_baudrate(lowlevel_uart_get_u32());
+			case cmd_write_u8:
+				write_u8();
 				break;
 
-			case core_cmd_write_u8:
-				core_write_u8();
+			case cmd_write_u16:
+				write_u16();
 				break;
 
-			case core_cmd_write_u16:
-				core_write_u16();
+			case cmd_write_u32:
+				write_u32();
 				break;
 
-			case core_cmd_write_u32:
-				core_write_u32();
+			case cmd_read_u8:
+				read_u8();
 				break;
 
-			case core_cmd_read_u8:
-				core_read_u8();
+			case cmd_read_u16:
+				read_u16();
 				break;
 
-			case core_cmd_read_u16:
-				core_read_u16();
+			case cmd_read_u32:
+				read_u32();
 				break;
 
-			case core_cmd_read_u32:
-				core_read_u32();
+			case cmd_mem_write:
+				mem_write();
 				break;
 
-			case core_cmd_mem_write:
-				core_mem_write();
+			case cmd_mem_read:
+				mem_read();
 				break;
 
-			case core_cmd_mem_read:
-				core_mem_read();
+			case cmd_run:
+				run(lowlevel_uart_get_u32());
 				break;
 
-			case core_cmd_run:
-				core_run(lowlevel_uart_get_u32());
-				break;
-
-			case core_cmd_run_kernel:
-				core_run_kernel(lowlevel_uart_get_u32(), lowlevel_uart_get_u32());
+			case cmd_run_kernel:
+				run_kernel(lowlevel_uart_get_u32(), lowlevel_uart_get_u32());
 				break;
 			}
 		}
 	}
 }
 
-static void core_read_u8(void)
+static void read_u8(void)
 {
 	u8 *addr = (u8 *)lowlevel_uart_get_u32();
 	lowlevel_uart_putc(*addr);
 }
 
-static void core_read_u16(void)
+static void read_u16(void)
 {
 	u16 *addr = (u16 *)lowlevel_uart_get_u32();
 	lowlevel_uart_put_u16(*addr);
 }
 
-static void core_read_u32(void)
+static void read_u32(void)
 {
 	u32 *addr = (u32 *)lowlevel_uart_get_u32();
 	lowlevel_uart_put_u32(*addr);
 }
 
-static void core_write_u8(void)
+static void write_u8(void)
 {
 	u8 *addr = (u8 *)lowlevel_uart_get_u32();
 	*addr = lowlevel_uart_getc();
 }
 
-static void core_write_u16(void)
+static void write_u16(void)
 {
 	u16 *addr = (u16 *)lowlevel_uart_get_u32();
 	*addr = lowlevel_uart_get_u16();
 }
 
-static void core_write_u32(void)
+static void write_u32(void)
 {
 	u32 *addr = (u32 *)lowlevel_uart_get_u32();
 	*addr = lowlevel_uart_get_u32();
 }
 
-static void core_mem_write(void)
+static void mem_write(void)
 {
 	u8 *addr, *p;
 	u32 size;
@@ -180,7 +163,7 @@ static void core_mem_write(void)
 	lowlevel_uart_put_u32(crc);
 }
 
-static void core_mem_read(void)
+static void mem_read(void)
 {
 	u8 *addr, *p;
 	u32 size;
@@ -198,12 +181,12 @@ static void core_mem_read(void)
 	lowlevel_uart_put_u32(crc);
 }
 
-void core_run(u32 exec_at)
+static void run(u32 exec_at)
 {
 	((void(*)())exec_at)();
 }
 
-void core_run_kernel(u32 exec_at, u32 machine_type)
+static void run_kernel(u32 exec_at, u32 machine_type)
 {
 	void (*kernel)(int zero, int arch, u32 params);
 	u32 param_at = (u32)-1;

@@ -111,7 +111,8 @@ class Target:
         return data
 
     def _write_struct(self, data, t):
-        self.sp.write(t.pack(data))
+        data = t.pack(data)
+        self.sp.write(data)
 
     def _read_struct(self, t):
         data = self.sp.read(t.size)
