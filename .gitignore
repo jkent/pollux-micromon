@@ -2,6 +2,3 @@ __pycache__/
 build/
 .config
 .config.old
-core.bin
-core.dis
-core.elf
