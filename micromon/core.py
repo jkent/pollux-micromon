@@ -43,65 +43,41 @@ class Core:
         self._target = target
         Loader(self._target)
 
-    def set_baudrate(self, baudrate):
-        self._target.write_u8(CORE_MODULE_ID)
-        self._target.write_u8(COMMANDS.index('set_baudrate'))
-        self._target.write_u32(baudrate)
         response = self._target.read_u8()
-        if response == None:
-            raise Exception('Target did not respond')
-        elif response:
-            return False
-
-        self._target.set_baudrate(baudrate)
-        self._target.write_u16(0xAA55)
-
-        response = self._target.read_u8()
-        if response == None:
-            raise Exception('Target did not respond')
-        elif response:
-            raise Exception('Target error')
-
-        return True
+        if not response:
+            raise Exception('Loading core failed')
 
     def write_u8(self, addr, data):
-        self._target.write_u8(CORE_MODULE_ID)
         self._target.write_u8(COMMANDS.index('write_u8'))
         self._target.write_u32(addr)
         self._target.write_u8(data)
 
     def write_u16(self, addr, data):
-        self._target.write_u8(CORE_MODULE_ID)
         self._target.write_u8(COMMANDS.index('write_u16'))
         self._target.write_u32(addr)
         self._target.write_u16(data)
 
     def write_u32(self, addr, data):
-        self._target.write_u8(CORE_MODULE_ID)
         self._target.write_u8(COMMANDS.index('write_u32'))
         self._target.write_u32(addr)
         self._target.write_u32(data)
 
     def read_u8(self, addr):
-        self._target.write_u8(CORE_MODULE_ID)
         self._target.write_u8(COMMANDS.index('read_u8'))
         self._target.write_u32(addr)
         return self._target.read_u8()
 
     def read_u16(self, addr):
-        self._target.write_u8(CORE_MODULE_ID)
         self._target.write_u8(COMMANDS.index('read_u16'))
         self._target.write_u32(addr)
         return self._target.read_u16()
 
     def read_u32(self, addr):
-        self._target.write_u8(CORE_MODULE_ID)
         self._target.write_u8(COMMANDS.index('read_u32'))
         self._target.write_u32(addr)
         return self._target.read_u32()
 
     def mem_write(self, addr, data):
-        self._target.write_u8(CORE_MODULE_ID)
         self._target.write_u8(COMMANDS.index('mem_write'))
         self._target.write_u32(addr)
         self._target.write_u32(len(data))
@@ -112,7 +88,6 @@ class Core:
         return crc_ok
 
     def mem_read(self, addr, size):
-        self._target.write_u8(CORE_MODULE_ID)
         self._target.write_u8(COMMANDS.index('mem_read'))
         self._target.write_u32(addr)
         self._target.write_u32(size)
@@ -123,12 +98,10 @@ class Core:
         return (data, crc_ok)
 
     def run(self, exec_at):
-        self._target.write_u8(CORE_MODULE_ID)
         self._target.write_u8(COMMANDS.index('run'))
         self._target.write_u32(exec_at)
 
     def run_kernel(self, exec_at, machine_type):
-        self._target.write_u8(CORE_MODULE_ID)
         self._target.write_u8(COMMANDS.index('run_kernel'))
         self._target.write_u32(exec_at)
         self._target.write_u32(machine_type)

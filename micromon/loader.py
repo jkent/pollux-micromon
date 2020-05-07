@@ -25,7 +25,7 @@ import os
 from binascii import crc32
 from time import sleep
 
-_loader_signature    = b'\xE6Mon'
+_loader_signature    = b'UART'
 
 class Loader:
     def __init__(self, target):
@@ -91,10 +91,6 @@ class Loader:
             else:
                 raise Exception('16k boot failed')
 
-        response = self._target.read_u8()
-        if not response:
-            raise Exception('Loading code failed')
-
         return True
 
     def _loader_signature(self):
@@ -121,14 +117,32 @@ class Loader:
 
     def _set_baudrate(self):
         baudrate = Config.get('monitor.baudrate')
-        
+        baudrates = {
+            19200: (11 << 16) | (39 << 4) | (1 << 1),
+            38400: (5 << 16) | (39 << 4) | (1 << 1),
+            57600: (3 << 16) | (39 << 4) | (1 << 1),
+            115200: (1 << 16) | (39 << 4) | (1 << 1),
+            230400: (7 << 16) | (4 << 4) | (1 << 1),
+            460800: (3 << 16) | (4 << 4) | (1 << 1),
+            614400: (2 << 16) | (4 << 4) | (1 << 1),
+            921600: (1 << 16) | (4 << 4) | (1 << 1),
+            1500000: (0 << 16) | (15 << 4) | (0 << 1),
+        }
+        baudinfo = baudrates[baudrate]
+
         with Log.debug('Setting target baudrate to %(baudrate)d',
                        baudrate=baudrate):
-            self._target.write_u32(baudrate)
+            self._target.write_u32(baudinfo)
             response = self._target.read_u8()
             if response:
                 self._target.set_baudrate(baudrate)
+            else:
+                raise Exception('Changing baudrate failed')
+
             self._target.write_u16(0xAA55)
+            response = self._target.read_u8()
+            if not response:
+                raise Exception('Changing baudrate failed')
 
     def _load_rest(self, data):
         self._target.write_u32(len(data))

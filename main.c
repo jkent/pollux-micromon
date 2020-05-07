@@ -50,61 +50,56 @@ enum cmd_commands {
 
 int main(void)
 {
-	u8 module, command;
-
-	/* signal we are here */
-	lowlevel_uart_putc(1);
-
 	init_crc32_table();
 
+	/* signal we are here */
+	lowlevel_write_u8(1);
+
 	while (1) {
-		module = lowlevel_uart_getc();
-		if (module == 0) {
-			command = lowlevel_uart_getc();
-			switch (command) {
-			case cmd_nop:
-				break;
+		u8 command = lowlevel_read_u8();
+		switch (command) {
+		case cmd_nop:
+			break;
 
-			case cmd_write_u8:
-				write_u8();
-				break;
+		case cmd_write_u8:
+			write_u8();
+			break;
 
-			case cmd_write_u16:
-				write_u16();
-				break;
+		case cmd_write_u16:
+			write_u16();
+			break;
 
-			case cmd_write_u32:
-				write_u32();
-				break;
+		case cmd_write_u32:
+			write_u32();
+			break;
 
-			case cmd_read_u8:
-				read_u8();
-				break;
+		case cmd_read_u8:
+			read_u8();
+			break;
 
-			case cmd_read_u16:
-				read_u16();
-				break;
+		case cmd_read_u16:
+			read_u16();
+			break;
 
-			case cmd_read_u32:
-				read_u32();
-				break;
+		case cmd_read_u32:
+			read_u32();
+			break;
 
-			case cmd_mem_write:
-				mem_write();
-				break;
+		case cmd_mem_write:
+			mem_write();
+			break;
 
-			case cmd_mem_read:
-				mem_read();
-				break;
+		case cmd_mem_read:
+			mem_read();
+			break;
 
-			case cmd_run:
-				run(lowlevel_uart_get_u32());
-				break;
+		case cmd_run:
+			run(lowlevel_read_u32());
+			break;
 
-			case cmd_run_kernel:
-				run_kernel(lowlevel_uart_get_u32(), lowlevel_uart_get_u32());
-				break;
-			}
+		case cmd_run_kernel:
+			run_kernel(lowlevel_read_u32(), lowlevel_read_u32());
+			break;
 		}
 	}
 
@@ -113,38 +108,38 @@ int main(void)
 
 static void read_u8(void)
 {
-	u8 *addr = (u8 *)lowlevel_uart_get_u32();
-	lowlevel_uart_putc(*addr);
+	u8 *addr = (u8 *)lowlevel_read_u32();
+	lowlevel_write_u8(*addr);
 }
 
 static void read_u16(void)
 {
-	u16 *addr = (u16 *)lowlevel_uart_get_u32();
-	lowlevel_uart_put_u16(*addr);
+	u16 *addr = (u16 *)lowlevel_read_u32();
+	lowlevel_write_u16(*addr);
 }
 
 static void read_u32(void)
 {
-	u32 *addr = (u32 *)lowlevel_uart_get_u32();
-	lowlevel_uart_put_u32(*addr);
+	u32 *addr = (u32 *)lowlevel_read_u32();
+	lowlevel_write_u32(*addr);
 }
 
 static void write_u8(void)
 {
-	u8 *addr = (u8 *)lowlevel_uart_get_u32();
-	*addr = lowlevel_uart_getc();
+	u8 *addr = (u8 *)lowlevel_read_u32();
+	*addr = lowlevel_read_u8();
 }
 
 static void write_u16(void)
 {
-	u16 *addr = (u16 *)lowlevel_uart_get_u32();
-	*addr = lowlevel_uart_get_u16();
+	u16 *addr = (u16 *)lowlevel_read_u32();
+	*addr = lowlevel_read_u16();
 }
 
 static void write_u32(void)
 {
-	u32 *addr = (u32 *)lowlevel_uart_get_u32();
-	*addr = lowlevel_uart_get_u32();
+	u32 *addr = (u32 *)lowlevel_read_u32();
+	*addr = lowlevel_read_u32();
 }
 
 static void mem_write(void)
@@ -153,16 +148,16 @@ static void mem_write(void)
 	u32 size;
 	u32 crc = 0;
 
-	addr = (u8 *)lowlevel_uart_get_u32();
-	size = lowlevel_uart_get_u32();
+	addr = (u8 *)lowlevel_read_u32();
+	size = lowlevel_read_u32();
 
 	p = addr;
 	while ((u32)addr + size > (u32)p) {
-		*p = lowlevel_uart_getc();
+		*p = lowlevel_read_u8();
 		crc = crc32(crc, *p);
 		p++;
 	}
-	lowlevel_uart_put_u32(crc);
+	lowlevel_write_u32(crc);
 }
 
 static void mem_read(void)
@@ -171,16 +166,16 @@ static void mem_read(void)
 	u32 size;
 	u32 crc = 0;
 
-	addr = (u8 *)lowlevel_uart_get_u32();
-	size = lowlevel_uart_get_u32();
+	addr = (u8 *)lowlevel_read_u32();
+	size = lowlevel_read_u32();
 
 	p = addr;
 	while ((u32)addr + size > (u32)p) {
-		lowlevel_uart_putc(*p);
+		lowlevel_write_u8(*p);
 		crc = crc32(crc, *p);
 		p++;
 	}
-	lowlevel_uart_put_u32(crc);
+	lowlevel_write_u32(crc);
 }
 
 static void run(u32 exec_at)
