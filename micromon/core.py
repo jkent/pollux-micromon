@@ -19,8 +19,6 @@ from binascii import crc32
 from .loader import Loader
 from .log import Log
 
-CORE_MODULE_ID = 0
-
 COMMANDS = (
   'nop',
   'write_u8',
@@ -107,14 +105,14 @@ class Core:
     def _write(self, data):
         size = len(data)
         blocksize = 512
-        blocks = (size + blocksize-1) / blocksize
+        blocks = (size + blocksize - 1) / blocksize
         block = 0
 
         log_entry = Log.info('Sending block %(block)d of %(blocks)d block(s)',
                              block=block, blocks=blocks)
         with log_entry:
-            while block < blocks:
-                log_entry.update(block=block+1)
+            while block + 1 < blocks:
+                log_entry.update(block=block + 1)
                 offset = block * blocksize
                 self._target.write(data[offset:offset+blocksize])
                 block += 1
@@ -122,14 +120,14 @@ class Core:
     def _read(self, size):
         data = ''
         blocksize = 512
-        blocks = (size + blocksize-1) / blocksize
+        blocks = (size + blocksize - 1) / blocksize
         block = 0
 
         log_entry = Log.info('Receiving block %(block)d of %(blocks)d block(s)',
                              block=block, blocks=blocks)
         with log_entry:
-            while block < blocks:
-                log_entry.update(block=block+1)
+            while block + 1 < blocks:
+                log_entry.update(block=block + 1)
                 offset = block * blocksize
                 data_block = self._target.read(blocksize)
                 if not data_block:
