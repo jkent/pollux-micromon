@@ -56,7 +56,7 @@ class Loader:
             sys.exit(1)
 
     def _read_core(self):
-        fp = open(micromon.CORE_BIN, 'rb')
+        fp = open(micromon.MICROMON_BIN, 'rb')
         fp.seek(0, os.SEEK_END)
         size = fp.tell()
         fp.seek(0, os.SEEK_SET)
@@ -74,7 +74,9 @@ class Loader:
                 if not self._loader_512(core):
                     return False
             elif uart_boot_size == 'detect':
-                if not self._write(core[512:16384]):
+                data = core[512:16384]
+                data += b'\0' * (16384 - 512 - len(data))
+                if not self._write(data):
                     return False
                 if self._loader_signature():
                     self._loader_16k()
@@ -84,7 +86,9 @@ class Loader:
                 raise Exception('512 boot failed')
 
         elif uart_boot_size == '16k':
-            if not self._write(core[:16384]):
+            data = core[:16384]
+            data += b'\0' * (16384 - len(data))
+            if not self._write(data):
                 return False
             if self._loader_signature():
                 self._loader_16k()
@@ -111,7 +115,7 @@ class Loader:
 
     def _loader_16k(self):
         self._set_baudrate()
-        if not self._load_rest(16384, core[16384:]):
+        if not self._load_rest(core[16384:]):
             return False
         return True
 

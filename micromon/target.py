@@ -22,6 +22,7 @@ from .log import Log
 from serial import Serial
 from time import sleep
 from struct import Struct
+import sys
 
 u8 = Struct('<B')
 u16 = Struct('<H')
@@ -34,7 +35,11 @@ class Target:
         data_timeout = Config.get('target.data_timeout')
 
         with Log.debug('Opening serial port'):
-            self.sp = Serial(serial_port, 19200, timeout=data_timeout)
+            try:
+                self.sp = Serial(serial_port, 19200, timeout=data_timeout)
+            except:
+                Log.fatal('Unable to open %(port)s', port=serial_port).single()
+                sys.exit(1)
             self.sp.flushOutput()
             self.sp.flushInput()
 
