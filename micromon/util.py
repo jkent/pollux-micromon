@@ -38,7 +38,7 @@ def stdin_gen(timeout=0.05):
             sleep(timeout)
     else:
         while select([sys.stdin.fileno()],[],[],timeout)[0]:
-            c = sys.stdin.read(1)
+            c = sys.stdin.buffer.read(1)
             yield c
 
 
@@ -93,12 +93,12 @@ def terminal(sp):
     while break_count < 2:
         serial_input = sp.read(sp.inWaiting())
         if serial_input:
-            sys.stdout.write(serial_input)
-            sys.stdout.flush()
+            sys.stdout.buffer.write(serial_input)
+            sys.stdout.buffer.flush()
 
-        user_input = ''
+        user_input = b''
         for c in stdin_gen():
-            if c == '\x03':
+            if c == b'\x03':
                 break_count += 1
                 if break_count >= 2:
                     break   
@@ -109,7 +109,7 @@ def terminal(sp):
             sp.write(user_input)
             sp.flush()
 
-    sys.stdout.write('\n\r')
+    sys.stdout.buffer.write(b'\n\r')
 
 
 if __name__ == '__main__':
