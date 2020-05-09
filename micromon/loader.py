@@ -77,7 +77,7 @@ class Loader:
                 if not self._write(data):
                     return False
                 if self._loader_signature():
-                    self._loader_16k()
+                    self._loader_16k(core)
                 else:
                     raise Exception('Detect boot failed')
             else:
@@ -89,7 +89,7 @@ class Loader:
             if not self._write(data):
                 return False
             if self._loader_signature():
-                self._loader_16k()
+                self._loader_16k(core)
             else:
                 raise Exception('16k boot failed')
 
@@ -111,7 +111,7 @@ class Loader:
             return False
         return True
 
-    def _loader_16k(self):
+    def _loader_16k(self, core):
         self._set_baudrate()
         if not self._load_rest(core[16384:]):
             return False
