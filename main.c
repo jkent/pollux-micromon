@@ -19,7 +19,7 @@
 #include <asm/types.h>
 #include <baremetal/crc32.h>
 #include <baremetal/linker.h>
-#include <driver/lowlevel_uart.h>
+#include <driver/early_uart.h>
 
 static void mem_write(void);
 static void mem_read(void);
@@ -52,10 +52,10 @@ int main(void)
 	init_crc32_table();
 
 	/* signal we are here */
-	lowlevel_write_u8(1);
+	early_write_u8(1);
 
 	while (1) {
-		u8 command = lowlevel_read_u8();
+		u8 command = early_read_u8();
 		switch (command) {
 		case cmd_nop:
 			break;
@@ -93,11 +93,11 @@ int main(void)
 			break;
 
 		case cmd_run:
-			run(lowlevel_read_u32());
+			run(early_read_u32());
 			break;
 
 		case cmd_run_kernel:
-			run_kernel(lowlevel_read_u32(), lowlevel_read_u32());
+			run_kernel(early_read_u32(), early_read_u32());
 			break;
 		}
 	}
@@ -107,38 +107,38 @@ int main(void)
 
 static void read_u8(void)
 {
-	u8 *addr = (u8 *)lowlevel_read_u32();
-	lowlevel_write_u8(*addr);
+	u8 *addr = (u8 *)early_read_u32();
+	early_write_u8(*addr);
 }
 
 static void read_u16(void)
 {
-	u16 *addr = (u16 *)lowlevel_read_u32();
-	lowlevel_write_u16(*addr);
+	u16 *addr = (u16 *)early_read_u32();
+	early_write_u16(*addr);
 }
 
 static void read_u32(void)
 {
-	u32 *addr = (u32 *)lowlevel_read_u32();
-	lowlevel_write_u32(*addr);
+	u32 *addr = (u32 *)early_read_u32();
+	early_write_u32(*addr);
 }
 
 static void write_u8(void)
 {
-	u8 *addr = (u8 *)lowlevel_read_u32();
-	*addr = lowlevel_read_u8();
+	u8 *addr = (u8 *)early_read_u32();
+	*addr = early_read_u8();
 }
 
 static void write_u16(void)
 {
-	u16 *addr = (u16 *)lowlevel_read_u32();
-	*addr = lowlevel_read_u16();
+	u16 *addr = (u16 *)early_read_u32();
+	*addr = early_read_u16();
 }
 
 static void write_u32(void)
 {
-	u32 *addr = (u32 *)lowlevel_read_u32();
-	*addr = lowlevel_read_u32();
+	u32 *addr = (u32 *)early_read_u32();
+	*addr = early_read_u32();
 }
 
 static void mem_write(void)
@@ -147,16 +147,16 @@ static void mem_write(void)
 	u32 size;
 	u32 crc = 0;
 
-	addr = (u8 *)lowlevel_read_u32();
-	size = lowlevel_read_u32();
+	addr = (u8 *)early_read_u32();
+	size = early_read_u32();
 
 	p = addr;
 	while ((u32)addr + size > (u32)p) {
-		*p = lowlevel_read_u8();
+		*p = early_read_u8();
 		crc = crc32(crc, *p);
 		p++;
 	}
-	lowlevel_write_u32(crc);
+	early_write_u32(crc);
 }
 
 static void mem_read(void)
@@ -165,16 +165,16 @@ static void mem_read(void)
 	u32 size;
 	u32 crc = 0;
 
-	addr = (u8 *)lowlevel_read_u32();
-	size = lowlevel_read_u32();
+	addr = (u8 *)early_read_u32();
+	size = early_read_u32();
 
 	p = addr;
 	while ((u32)addr + size > (u32)p) {
-		lowlevel_write_u8(*p);
+		early_write_u8(*p);
 		crc = crc32(crc, *p);
 		p++;
 	}
-	lowlevel_write_u32(crc);
+	early_write_u32(crc);
 }
 
 static void run(u32 exec_at)
