@@ -23,10 +23,11 @@ from micromon import *
 from micromon.registers import REGS, Registers
 from micromon.util import stdin_gen, cbreak_tty
 
-def int2bin(n, count=32):
-    """returns the binary of integer n, using count number of digits"""
-    return ''.join([str((n >> y) & 1) for y in range(count-1, -1, -1)])
-
+def print_value(value, bits):
+    value_bin = bin(value)[2:].zfill(bits)
+    value_bin = ' '.join((value_bin[i:i+4] for i in range(0, bits, 4))).rjust(39)
+    value_hex = ('0x%0.*X' % (bits // 4, value)).rjust(10)
+    print('%s      %s' % (value_hex, value_bin.rjust(14 - len(value_bin))))
 
 class CommandParser(Cmd):
     def __init__(self):
@@ -42,6 +43,68 @@ class CommandParser(Cmd):
 
     def emptyline(self):
         pass
+
+    def read(self, s, bits):
+        l = s.split()
+        if len(l) != 1:
+            print('*** Invalid number of arguments')
+            return
+
+        upper = (1 << 32) - 1
+        try:
+            addr = int(l[0], 0)
+            assert addr >= 0 and addr <= upper
+        except:
+            print(f'*** Address must be an integer in the range of 0 to {upper}')
+            return
+
+        if bits == 8:
+            value = self.core.read_u8(addr)
+        elif bits == 16:
+            value = self.core.read_u16(addr)
+        elif bits == 32:
+            value = self.core.read_u32(addr)
+        else:
+            print('*** Invalid number of bits')
+            return
+
+        if value is None:    
+            print('*** Error reading')
+            return
+
+        print_value(value, bits)
+
+    def write(self, s, bits):
+        l = s.split()
+        if len(l) != 2:
+            print('*** Invalid number of arguments')
+            return
+        
+        upper = (1 << 32) - 1
+        try:
+            addr = int(l[0], 0)
+            assert addr >= 0 and addr <= upper
+        except:
+            print(f'*** Address must be an integer in the range of 0 to {upper}')
+            return
+        
+        upper = (1 << bits) - 1
+        try:
+            value = int(l[1], 0)
+            assert value >= 0 and value <= upper
+        except:
+            print(f'*** Value must be an integer in the range of 0 to {upper}')
+            return
+
+        if bits == 8:
+            self.core.write_u8(addr, value)
+        elif bits == 16:
+            self.core.write_u16(addr, value)
+        elif bits == 32:
+            self.core.write_u32(addr, value)
+        else:
+            print('*** Invalid number of bits')
+            return
 
     def do_regread(self, s):
         """regread [reg]
@@ -65,9 +128,7 @@ class CommandParser(Cmd):
             print('*** Error reading')
             return
 
-        value_bin = int2bin(value, r['bits'])
-        value_bin = ' '.join([value_bin[x:x+4] for x in range(0, 32, 4)])
-        print(('0x%08X      %s'  % (value, value_bin)))
+        print_value(value, r['bits'])
 
     def do_regwrite(self, s):
         """regwrite [reg] [value]
@@ -100,6 +161,48 @@ class CommandParser(Cmd):
             return
 
         self.regs.write(r, value)
+
+    def do_readb(self, s):
+        """readb address
+
+        Read a u8 value from memory.
+        """
+        self.read(s, 8)
+
+    def do_readw(self, s):
+        """readw address
+
+        Read a u16 value from memory.
+        """
+        self.read(s, 16)
+
+    def do_readl(self, s):
+        """readl address
+
+        Read a u32 value from memory.
+        """
+        self.read(s, 32)
+
+    def do_writeb(self, s):
+        """writeb address value
+
+        Write a u8 value to memory.
+        """
+        self.write(self, s, 8)
+
+    def do_writew(self, s):
+        """writew address value
+
+        Write a u16 value to memory.
+        """
+        self.write(self, s, 16)
+
+    def do_writel(self, s):
+        """writel address value
+
+        Write a u32 value to memory.
+        """
+        self.write(self, s, 32)
 
     def do_reglist(self, s):
         """reglist [[group]]
