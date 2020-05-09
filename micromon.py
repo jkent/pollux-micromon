@@ -53,8 +53,18 @@ class CommandParser(Cmd):
         upper = (1 << 32) - 1
         try:
             addr = int(l[0], 0)
-            assert addr >= 0 and addr <= upper
         except:
+            try:
+                r = Registers.lookup(l[0])
+                if r['bits'] != bits:
+                    regbits = r['bits']
+                    print(f'Note: Register is {regbits} bits')
+                addr = r['addr']
+            except:
+                print('*** Register is unknown')
+                return
+
+        if addr < 0 or addr > upper:
             print(f'*** Address must be an integer in the range of 0 to {upper}')
             return
 
@@ -83,8 +93,18 @@ class CommandParser(Cmd):
         upper = (1 << 32) - 1
         try:
             addr = int(l[0], 0)
-            assert addr >= 0 and addr <= upper
         except:
+            try:
+                r = Registers.lookup(l[0])
+                if r['bits'] != bits:
+                    regbits = r['bits']
+                    print(f'Note: Register is {regbits} bits')
+                addr = r['addr']
+            except:
+                print('*** Register is unknown')
+                return
+
+        if addr < 0 or addr > upper:
             print(f'*** Address must be an integer in the range of 0 to {upper}')
             return
         
@@ -105,62 +125,6 @@ class CommandParser(Cmd):
         else:
             print('*** Invalid number of bits')
             return
-
-    def do_regread(self, s):
-        """regread [reg]
-
-        Read the value of a register.
-        """
-        l = s.split()
-        if len(l) != 1:
-            print('*** Invalid number of arguments')
-            return
-        
-        reg = l[0]
-        try:
-            r = Registers.lookup(reg)
-        except:
-            print('*** Register is unknown')
-            return
-
-        value = self.regs.read(r)
-        if value is None:    
-            print('*** Error reading')
-            return
-
-        print_value(value, r['bits'])
-
-    def do_regwrite(self, s):
-        """regwrite [reg] [value]
-
-        Write a hex value to a register.
-        """
-        l = s.split()
-        if len(l) != 2:
-            print('*** Invalid number of arguments')
-            return
-    
-        reg = l[0]
-        try:
-            r = Registers.lookup(reg)
-        except:
-            print('*** Register is unknown')
-            return
-        
-        s = l[1].lower()
-        value = None
-        try:        
-            if s.startswith('0b'):
-                value = int(s, 2)
-            elif s.startswith('0x'):
-                value = int(s, 16)
-            else:
-                value = int(s)
-        except:
-            print('*** Invalid value')
-            return
-
-        self.regs.write(r, value)
 
     def do_readb(self, s):
         """readb address
