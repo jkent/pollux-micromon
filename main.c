@@ -17,8 +17,10 @@
  */
 
 #include <asm/types.h>
+#include <baremetal/cache.h>
 #include <baremetal/crc32.h>
 #include <baremetal/linker.h>
+#include <baremetal/mmu.h>
 #include <driver/early_uart.h>
 
 static void mem_write(void);
@@ -179,11 +181,29 @@ static void mem_read(void)
 
 static void run(u32 exec_at)
 {
+#if defined(CONFIG_BAREMETAL_DCACHE)
+	dcache_disable();
+#endif
+#if defined(CONFIG_BAREMETAL_MMU)
+	mmu_disable();
+#endif
+#if defined(CONFIG_BAREMETAL_ICACHE)
+	icache_disable();
+#endif
 	((void(*)())exec_at)();
 }
 
 static void run_kernel(u32 exec_at, u32 machine_type)
 {
+#if defined(CONFIG_BAREMETAL_DCACHE)
+	dcache_disable();
+#endif
+#if defined(CONFIG_BAREMETAL_MMU)
+	mmu_disable();
+#endif
+#if defined(CONFIG_BAREMETAL_ICACHE)
+	icache_disable();
+#endif
 	void (*kernel)(int zero, int arch, u32 params);
 	u32 param_at = (u32)-1;
 

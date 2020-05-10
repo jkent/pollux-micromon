@@ -29,13 +29,13 @@ def main():
     if len(sys.argv) > 2:
         exec_baud = int(sys.argv[2])
 
-    load_address = 0
+    load_address = 0x800000
     if len(sys.argv) > 3:
-        load_address = int(sys.argv[3], 16)
+        load_address = int(sys.argv[3], 0)
 
     exec_address = load_address
     if len(sys.argv) > 4:
-        exec_address = int(sys.argv[4], 16)
+        exec_address = int(sys.argv[4], 0)
 
     target = Target()
     core = Core(target)
