@@ -86,8 +86,12 @@ class Target:
         if reset_pin != 'none':
             with Log.info('Resetting target'):
                 self._set_pin(reset_pin, True)
+                old_timeout = self.sp.timeout
+                self.sp.timeout = reset_delay / 2
+                self.sp.read(1000)
+                self.sp.timeout = old_timeout
                 self._set_pin(reset_pin, False)
-                sleep(reset_delay)
+                sleep(reset_delay / 2)
 
     def set_uart_boot(self, state):
         uart_boot_pin = Config.get('target.uart_boot_pin')

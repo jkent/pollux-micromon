@@ -29,7 +29,7 @@ def main():
     if len(sys.argv) > 2:
         exec_baud = int(sys.argv[2])
 
-    load_address = 0x800000
+    load_address = 0x000000
     if len(sys.argv) > 3:
         load_address = int(sys.argv[3], 0)
 
@@ -45,9 +45,10 @@ def main():
     fp.close()
 
     assert core.mem_write(load_address, data)
-    if exec_baud:
-        assert core.set_baudrate(exec_baud)
     core.run(exec_address)
+
+    if exec_baud:
+        target.set_baudrate(exec_baud)
 
     terminal(target.sp)
 
