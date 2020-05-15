@@ -21,7 +21,7 @@
 #include <baremetal/crc32.h>
 #include <baremetal/linker.h>
 #include <baremetal/mmu.h>
-#include <driver/early_uart.h>
+#include <driver/uart.h>
 
 static void mem_write(void);
 static void mem_read(void);
@@ -54,10 +54,10 @@ int main(void)
 	init_crc32_table();
 
 	/* signal we are here */
-	early_write_u8(1);
+	uart0_writeb(1);
 
 	while (1) {
-		u8 command = early_read_u8();
+		u8 command = uart0_readb();
 		switch (command) {
 		case cmd_nop:
 			break;
@@ -95,11 +95,11 @@ int main(void)
 			break;
 
 		case cmd_run:
-			run(early_read_u32());
+			run(uart0_readl());
 			break;
 
 		case cmd_run_kernel:
-			run_kernel(early_read_u32(), early_read_u32());
+			run_kernel(uart0_readl(), uart0_readl());
 			break;
 		}
 	}
@@ -109,38 +109,38 @@ int main(void)
 
 static void read_u8(void)
 {
-	u8 *addr = (u8 *)early_read_u32();
-	early_write_u8(*addr);
+	u8 *addr = (u8 *)uart0_readl();
+	uart0_writeb(*addr);
 }
 
 static void read_u16(void)
 {
-	u16 *addr = (u16 *)early_read_u32();
-	early_write_u16(*addr);
+	u16 *addr = (u16 *)uart0_readl();
+	uart0_writew(*addr);
 }
 
 static void read_u32(void)
 {
-	u32 *addr = (u32 *)early_read_u32();
-	early_write_u32(*addr);
+	u32 *addr = (u32 *)uart0_readl();
+	uart0_writel(*addr);
 }
 
 static void write_u8(void)
 {
-	u8 *addr = (u8 *)early_read_u32();
-	*addr = early_read_u8();
+	u8 *addr = (u8 *)uart0_readl();
+	*addr = uart0_readb();
 }
 
 static void write_u16(void)
 {
-	u16 *addr = (u16 *)early_read_u32();
-	*addr = early_read_u16();
+	u16 *addr = (u16 *)uart0_readl();
+	*addr = uart0_readw();
 }
 
 static void write_u32(void)
 {
-	u32 *addr = (u32 *)early_read_u32();
-	*addr = early_read_u32();
+	u32 *addr = (u32 *)uart0_readl();
+	*addr = uart0_readl();
 }
 
 static void mem_write(void)
@@ -149,16 +149,16 @@ static void mem_write(void)
 	u32 size;
 	u32 crc = 0;
 
-	addr = (u8 *)early_read_u32();
-	size = early_read_u32();
+	addr = (u8 *)uart0_readl();
+	size = uart0_readl();
 
 	p = addr;
 	while ((u32)addr + size > (u32)p) {
-		*p = early_read_u8();
+		*p = uart0_readb();
 		crc = crc32(crc, *p);
 		p++;
 	}
-	early_write_u32(crc);
+	uart0_writel(crc);
 }
 
 static void mem_read(void)
@@ -167,16 +167,16 @@ static void mem_read(void)
 	u32 size;
 	u32 crc = 0;
 
-	addr = (u8 *)early_read_u32();
-	size = early_read_u32();
+	addr = (u8 *)uart0_readl();
+	size = uart0_readl();
 
 	p = addr;
 	while ((u32)addr + size > (u32)p) {
-		early_write_u8(*p);
+		uart0_writeb(*p);
 		crc = crc32(crc, *p);
 		p++;
 	}
-	early_write_u32(crc);
+	uart0_writel(crc);
 }
 
 static void run(u32 exec_at)
@@ -184,11 +184,11 @@ static void run(u32 exec_at)
 #if defined(CONFIG_BAREMETAL_DCACHE)
 	dcache_disable();
 #endif
-#if defined(CONFIG_BAREMETAL_MMU)
-	mmu_disable();
-#endif
 #if defined(CONFIG_BAREMETAL_ICACHE)
 	icache_disable();
+#endif
+#if defined(CONFIG_BAREMETAL_MMU)
+	mmu_disable();
 #endif
 	((void(*)())exec_at)();
 }
@@ -198,11 +198,11 @@ static void run_kernel(u32 exec_at, u32 machine_type)
 #if defined(CONFIG_BAREMETAL_DCACHE)
 	dcache_disable();
 #endif
-#if defined(CONFIG_BAREMETAL_MMU)
-	mmu_disable();
-#endif
 #if defined(CONFIG_BAREMETAL_ICACHE)
 	icache_disable();
+#endif
+#if defined(CONFIG_BAREMETAL_MMU)
+	mmu_disable();
 #endif
 	void (*kernel)(int zero, int arch, u32 params);
 	u32 param_at = (u32)-1;
