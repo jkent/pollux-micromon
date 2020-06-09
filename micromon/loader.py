@@ -26,8 +26,9 @@ from time import sleep
 _loader_signature    = b'UART'
 
 class Loader:
-    def __init__(self, target):
+    def __init__(self, target, file=micromon.MICROMON_BIN):
         self._target = target
+        self._file = file
 
         powerup_delay = Config.get('target.powerup_delay')
 
@@ -49,12 +50,13 @@ class Loader:
 
                 if self._init_core(core):
                     break
+
         except Exception as inst:
             Log.fatal(str(inst)).single()
             sys.exit(1)
 
     def _read_core(self):
-        fp = open(micromon.MICROMON_BIN, 'rb')
+        fp = open(self._file, 'rb')
         fp.seek(0, os.SEEK_END)
         size = fp.tell()
         fp.seek(0, os.SEEK_SET)
@@ -65,13 +67,13 @@ class Loader:
     def _init_core(self, core):
         uart_boot_size = Config.get('monitor.uart_boot_size')
 
-        if uart_boot_size in ['detect', '512']:
+        if uart_boot_size in ['auto', '512']:
             if not self._write(core[:512]):
                 return False
             if self._loader_signature():
                 if not self._loader_512(core):
                     return False
-            elif uart_boot_size == 'detect':
+            elif uart_boot_size == 'auto':
                 data = core[512:16384]
                 data += b'\0' * (16384 - 512 - len(data))
                 if not self._write(data):
@@ -172,4 +174,3 @@ class Loader:
                 block += 1
 
         return True
-

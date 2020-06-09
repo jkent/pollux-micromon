@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-#  Copyright (C) 2011-2020 Jeff Kent <jeff@jkent.net>
+#  Copyright (C) 2020 Jeff Kent <jeff@jkent.net>
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License version 2 as
@@ -20,37 +20,21 @@ import sys
 from micromon import *
 from micromon.util import terminal
 
-# TODO: Integrate into the Micromon shell
-
 def main():
-    filename = sys.argv[1]
+    file = sys.argv[1]
 
-    exec_baud = 115200
+    baud = 115200
     if len(sys.argv) > 2:
-        exec_baud = int(sys.argv[2])
-
-    load_address = 0x00008000
-    if len(sys.argv) > 3:
-        load_address = int(sys.argv[3], 16)
-
-    exec_address = load_address
-    if len(sys.argv) > 4:
-        exec_address = int(sys.argv[4], 16)
+        baud = int(sys.argv[2])
 
     target = Target()
-    loader = Loader(target)
-    core = Core(target)
+    loader = Loader(target, file)
 
-    fp = open(filename, 'rb')
-    data = fp.read()
-    fp.close()
+    if target.read_u8() != 0x5A:
+        raise Exception('Invalid handshake')
+    target.write_u8(0xA5)
 
-    #assert
-    core.mem_write(load_address, data)
-    if exec_baud:
-        assert core.set_baudrate(exec_baud)
-    core.run_kernel(exec_address, 2028)
-
+    target.set_baudrate(baud)
     terminal(target.sp)
 
 if __name__ == '__main__':

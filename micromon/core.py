@@ -18,6 +18,7 @@
 from binascii import crc32
 from .loader import Loader
 from .log import Log
+from time import sleep
 
 COMMANDS = (
   'nop',
@@ -37,11 +38,15 @@ class Core:
     """python interface to the core, the base code running on the target"""
     def __init__(self, target):
         self._target = target
-        Loader(self._target)
 
         response = self._target.read_u8()
-        if not response:
-            raise Exception('Loading core failed')
+        if response != 0x5A:
+            raise Exception('Invalid handshake')
+        target.write_u8(0xA5)
+
+        if self._target.read_u32() != 0x4e4f4d75:
+            raise Exception('Micromon signature invalid/missing')
+        sleep(0.1)
 
     def write_u8(self, addr, data):
         self._target.write_u8(COMMANDS.index('write_u8'))

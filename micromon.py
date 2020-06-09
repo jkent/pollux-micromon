@@ -37,6 +37,7 @@ class CommandParser(Cmd):
     
     def preloop(self):
         self.target = Target()
+        self.loader = Loader(self.target)
         self.core = Core(self.target)
         self.regs = Registers(self.core)
         self.do_power('on')

@@ -42,6 +42,7 @@ if not path.exists(CONFIG_PATH):
     shutil.copyfile(DEFAULT_CONFIG_PATH, CONFIG_PATH)
 
 from .core import Core
+from .loader import Loader
 from .target import Target
-__all__ = ['Target', 'Core']
+__all__ = ['Core', 'Loader', 'Target']
 

@@ -38,6 +38,7 @@ def main():
         exec_address = int(sys.argv[4], 0)
 
     target = Target()
+    loader = Loader(target)
     core = Core(target)
 
     fp = open(filename, 'rb')

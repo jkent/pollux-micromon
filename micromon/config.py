@@ -42,8 +42,8 @@ class ConfigSingleton:
         'target.powerup_delay':
             {'type': float, 'default': 1.0},
         'monitor.uart_boot_size':
-            {'type': str, 'default': 'detect',
-             'values': ['detect', '512', '16k']},
+            {'type': str, 'default': 'auto',
+             'values': ['auto', '512', '16k']},
         'monitor.baudrate':
             {'type': int, 'default': 115200, 
              'values': [19200, 38400, 57600, 115200, 230400, 460800, 614400,

@@ -54,7 +54,7 @@ int main(void)
 	init_crc32_table();
 
 	/* signal we are here */
-	uart0_writeb(1);
+	uart0_writel(0x4e4f4d75); /* uMON */
 
 	while (1) {
 		u8 command = uart0_readb();
