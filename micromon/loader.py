@@ -141,12 +141,12 @@ class Loader:
             if response:
                 self._target.set_baudrate(baudrate)
             else:
-                raise Exception('Changing baudrate failed')
+                raise Exception('Changing baudrate failed (1)')
 
             self._target.write_u16(0xAA55)
             response = self._target.read_u8()
             if not response:
-                raise Exception('Changing baudrate failed')
+                raise Exception('Changing baudrate failed (2)')
 
     def _load_rest(self, data):
         self._target.write_u32(len(data))

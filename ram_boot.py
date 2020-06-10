@@ -18,7 +18,6 @@
 
 import sys
 from micromon import *
-from micromon.util import terminal
 
 # TODO: Integrate into the Micromon shell
 
@@ -50,8 +49,6 @@ def main():
 
     if exec_baud:
         target.set_baudrate(exec_baud)
-
-    terminal(target.sp)
 
 if __name__ == '__main__':
     main()

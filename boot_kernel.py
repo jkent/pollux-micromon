@@ -18,7 +18,6 @@
 
 import sys
 from micromon import *
-from micromon.util import terminal
 
 # TODO: Integrate into the Micromon shell
 
@@ -45,13 +44,10 @@ def main():
     data = fp.read()
     fp.close()
 
-    #assert
     core.mem_write(load_address, data)
     if exec_baud:
         assert core.set_baudrate(exec_baud)
     core.run_kernel(exec_address, 2028)
-
-    terminal(target.sp)
 
 if __name__ == '__main__':
     main()

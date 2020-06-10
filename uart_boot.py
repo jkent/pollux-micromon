@@ -18,7 +18,6 @@
 
 import sys
 from micromon import *
-from micromon.util import terminal
 
 def main():
     file = sys.argv[1]
@@ -35,7 +34,6 @@ def main():
     target.write_u8(0xA5)
 
     target.set_baudrate(baud)
-    terminal(target.sp)
 
 if __name__ == '__main__':
     main()

@@ -21,7 +21,6 @@ import sys
 from time import sleep
 from micromon import *
 from micromon.registers import REGS, Registers
-from micromon.util import stdin_gen, cbreak_tty
 
 def print_value(value, bits):
     value_bin = bin(value)[2:].zfill(bits)
@@ -211,74 +210,6 @@ class CommandParser(Cmd):
     #
     #    Provide detailed information on a register.
     #    """
-
-    def do_gpioscan(self, s):
-        """gpioscan [A|B|C] [[mask]]
-
-        Helps identify GPIOs.  Use with great trepedation."""
-
-        l = s.split()
-        if len(l) > 2:
-            print('*** Invalid number of arguments')
-            return
-
-        port = l[0].upper()
-        if port not in ['A', 'B', 'C']:
-            print('*** Unknown GPIO port')
-            return
-
-        mask = 0xFFFFFFFF
-        if len(l) >= 2:
-            try:
-                mask = int(l[1],16)
-                assert mask >= 0 and mask <= 0xFFFFFFFF
-            except:
-                print('*** Bad mask')
-                return
-
-        first = 0
-        last = 31
-        split = 16
-
-        if port == 'A':
-            self.regs.write('GPIO%sALTFN0' % port, 0x00010000)
-        else:
-            self.regs.write('GPIO%sALTFN0' % port, 0x00000000)
-        self.regs.write('GPIO%sALTFN1' % port, 0x00000000)
-        self.regs.write('GPIO%sOUTENB' % port, 0xFFFFFFFF & mask)
-        
-        @cbreak_tty
-        def toggle():
-            bits = 0
-            for i in range(first, last+1):
-                bits |= 1 << i
-
-            state = False
-            while True:
-                try:
-                    return stdin_gen(0.1).next().lower()
-                except StopIteration:
-                    if state:
-                        self.regs.write('GPIO%sOUT' % port, 0xFFFFFFFF)
-                    else:
-                        self.regs.write('GPIO%sOUT' % port, ~bits & 0xFFFFFFFF)
-                    state = not state
-
-        print('Find a pin that is toggling, and press any key to continue.')
-        toggle()
-        while split >= 1:
-            first += split
-            print('Is it toggling now? [y/n]')
-            key = None
-            while key not in ['y', 'n']:
-                key = toggle()
-            if key == 'n':
-                first -= split
-                last -= split
-            split /= 2
-        print(('You found GPIO%s%d' % (port, first)))
-
-        self.regs.write('GPIO%sOUTENB' % port, 0x00000000)
 
     def do_memtoggle(self, s):
         """memtoggle [addr] [bits] [mask]"""
