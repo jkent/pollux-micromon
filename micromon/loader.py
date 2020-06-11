@@ -51,6 +51,11 @@ class Loader:
                 if self._init_core(core):
                     break
 
+            response = self._target.read_u8()
+            if response != 0x5A:
+                raise Exception('Invalid handshake')
+            target.write_u8(0xA5)
+
         except Exception as inst:
             Log.fatal(str(inst)).single()
             sys.exit(1)

@@ -39,11 +39,6 @@ class Core:
     def __init__(self, target):
         self._target = target
 
-        response = self._target.read_u8()
-        if response != 0x5A:
-            raise Exception('Invalid handshake')
-        target.write_u8(0xA5)
-
         if self._target.read_u32() != 0x4e4f4d75:
             raise Exception('Micromon signature invalid/missing')
         sleep(0.1)
