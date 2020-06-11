@@ -39,7 +39,6 @@ class CommandParser(Cmd):
         self.loader = Loader(self.target)
         self.core = Core(self.target)
         self.regs = Registers(self.core)
-        self.do_power('on')
 
     def emptyline(self):
         pass
@@ -315,21 +314,16 @@ class CommandParser(Cmd):
         else:
             print((self.do_power.__doc__))
 
-    def do_EOF(self, s):
-        """EOF
+    def do_quit(self, s):
+        """quit
 
         Powers off target and exits.
         """
         self.do_power('off')
-        print()
+        sleep(0.1)
         return True
 
-    def do_quit(self, s):
-        """quit
-
-        Exit the program.
-        """
-        return True
+    do_EOF = do_quit
     do_q = do_quit
     
 if __name__ == '__main__':
