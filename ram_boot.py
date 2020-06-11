@@ -24,17 +24,13 @@ from micromon import *
 def main():
     filename = sys.argv[1]
 
-    exec_baud = None
-    if len(sys.argv) > 2:
-        exec_baud = int(sys.argv[2])
-
     load_address = 0x000000
-    if len(sys.argv) > 3:
-        load_address = int(sys.argv[3], 0)
+    if len(sys.argv) > 2:
+        load_address = int(sys.argv[2], 0)
 
     exec_address = load_address
-    if len(sys.argv) > 4:
-        exec_address = int(sys.argv[4], 0)
+    if len(sys.argv) > 3:
+        exec_address = int(sys.argv[3], 0)
 
     target = Target()
     loader = Loader(target)
@@ -46,9 +42,6 @@ def main():
 
     assert core.mem_write(load_address, data)
     core.run(exec_address)
-
-    if exec_baud:
-        target.set_baudrate(exec_baud)
 
 if __name__ == '__main__':
     main()

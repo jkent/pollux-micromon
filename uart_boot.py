@@ -22,18 +22,8 @@ from micromon import *
 def main():
     file = sys.argv[1]
 
-    baud = 115200
-    if len(sys.argv) > 2:
-        baud = int(sys.argv[2])
-
     target = Target()
     loader = Loader(target, file)
-
-    if target.read_u8() != 0x5A:
-        raise Exception('Invalid handshake')
-    target.write_u8(0xA5)
-
-    target.set_baudrate(baud)
 
 if __name__ == '__main__':
     main()
